@@ -1,0 +1,124 @@
+package medPro.DAO;
+
+import medPro.database.Conexao;
+import medPro.model.Medicamento;
+
+import java.sql.*;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+
+//CORRETO
+public class MedicamentoDAO {
+
+	// Inserir
+	public void salvar(Medicamento medicamento) {
+		String sql = "INSERT INTO Medicamento (nome_Medicamento, horario_Medicamento, quantidade_Medicamento) VALUES (?, ?, ?)";
+
+		try (Connection conn = Conexao.conectar();
+				PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+			stmt.setString(1, medicamento.getNomeMedicamento());
+			stmt.setTime(2, Time.valueOf(medicamento.getHorario_Medicamento()));
+			stmt.setString(3, medicamento.getQuantidade_Medicamento());
+			stmt.executeUpdate();
+
+			try (ResultSet rs = stmt.getGeneratedKeys()) {
+				if (rs.next()) {
+					int idGerado = rs.getInt(1);
+					medicamento.setIdMedicamento(idGerado);
+					System.out.println("Medicamento inserido com ID: " + idGerado);
+				}
+			}
+
+		} catch (SQLException e) {
+			System.out.println("Erro ao inserir medicamento: " + e.getMessage());
+		}
+	}
+
+	// Listar todos
+	public List<Medicamento> listarTodos() {
+		List<Medicamento> lista = new ArrayList<>();
+		String sql = "SELECT * FROM Medicamento";
+
+		try (Connection conn = Conexao.conectar();
+				Statement stmt = conn.createStatement();
+				ResultSet rs = stmt.executeQuery(sql)) {
+
+			while (rs.next()) {
+				int id = rs.getInt("id_Medicamento");
+				String nome = rs.getString("nome_Medicamento");
+				LocalTime horario = rs.getTime("horario_Medicamento").toLocalTime();
+				String quantidade = rs.getString("quantidade_Medicamento");
+
+				Medicamento m = new Medicamento(nome, horario, quantidade);
+				m.setIdMedicamento(id); // Adicione esta linha
+				lista.add(m);
+			}
+
+		} catch (SQLException e) {
+			System.out.println("Erro ao listar medicamentos: " + e.getMessage());
+		}
+
+		return lista;
+	}
+
+	// Buscar por ID
+	public Medicamento buscarPorId(int id) {
+		String sql = "SELECT * FROM Medicamento WHERE id_Medicamento = ?";
+		Medicamento medicamento = null;
+
+		try (Connection conn = Conexao.conectar(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setInt(1, id);
+			ResultSet rs = stmt.executeQuery();
+
+			if (rs.next()) {
+				String nome = rs.getString("nome_Medicamento");
+				LocalTime horario = rs.getTime("horario_Medicamento").toLocalTime();
+				String quantidade = rs.getString("quantidade_Medicamento");
+
+				medicamento = new Medicamento(nome, horario, quantidade);
+				medicamento.setIdMedicamento(rs.getInt("id_Medicamento"));
+			}
+
+		} catch (SQLException e) {
+			System.out.println("Erro ao buscar medicamento: " + e.getMessage());
+		}
+
+		return medicamento;
+	}
+
+	// Atualizar
+	public void atualizar(Medicamento medicamento) {
+		String sql = "UPDATE Medicamento SET nome_Medicamento = ?, horario_Medicamento= ?, quantidade_Medicamento = ? WHERE id_Medicamento = ?";
+
+		try (Connection conn = Conexao.conectar(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setString(1, medicamento.getNomeMedicamento());
+			stmt.setTime(2, Time.valueOf(medicamento.getHorario_Medicamento()));
+			stmt.setString(3, medicamento.getQuantidade_Medicamento());
+			stmt.setInt(4, medicamento.getIdMedicamento());
+			stmt.executeUpdate();
+
+			System.out.println("Medicamento atualizado com sucesso!");
+		} catch (SQLException e) {
+			System.out.println("Erro ao atualizar medicamento: " + e.getMessage());
+		}
+	}
+
+	// Deletar
+	public void deletar(int id) {
+		String sql = "DELETE FROM Medicamento WHERE id_Medicamento = ?";
+
+		try (Connection conn = Conexao.conectar(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setInt(1, id);
+			stmt.executeUpdate();
+			System.out.println("Medicamento removido com sucesso!");
+
+		} catch (SQLException e) {
+			System.out.println("Erro ao remover medicamento: " + e.getMessage());
+		}
+	}
+}

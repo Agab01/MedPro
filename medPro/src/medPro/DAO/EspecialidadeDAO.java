@@ -1,0 +1,110 @@
+package medPro.DAO;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import medPro.database.Conexao;
+import medPro.model.Especialidade;
+
+public class EspecialidadeDAO {
+
+	// Inserir nova especialidade
+	public void salvar(Especialidade especialidade) {
+		String sql = "INSERT INTO Especialidade (nome_Especialidade) VALUES (?)";
+
+		try (Connection conn = Conexao.conectar(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setString(1, especialidade.getNomeEspecialidade());
+			stmt.executeUpdate();
+
+			System.out.println(" Especialidade inserida com sucesso!");
+		} catch (SQLException e) {
+			System.out.println(" Erro ao inserir especialidade: " + e.getMessage());
+		}
+	}
+
+	// Listar todas as especialidades
+	public List<Especialidade> listarTodos() {
+		List<Especialidade> lista = new ArrayList<>();
+		String sql = "SELECT * FROM Especialidade";
+
+		try (Connection conn = Conexao.conectar();
+				Statement stmt = conn.createStatement();
+				ResultSet rs = stmt.executeQuery(sql)) {
+
+			while (rs.next()) {
+				String nome = rs.getString("nome_Especialidade");
+				Especialidade especialidade = new Especialidade(nome);
+				lista.add(especialidade);
+			}
+
+		} catch (SQLException e) {
+			System.out.println(" Erro ao listar especialidades: " + e.getMessage());
+		}
+
+		return lista;
+	}
+
+	// Buscar especialidade por nome
+	public Especialidade buscarPorNome(String nomeEspecialidade) {
+		String sql = "SELECT * FROM Especialidade WHERE nome_Especialidade = ?";
+
+		try (Connection conn = Conexao.conectar(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setString(1, nomeEspecialidade);
+			ResultSet rs = stmt.executeQuery();
+
+			if (rs.next()) {
+				String nome = rs.getString("nome_Especialidade");
+				return new Especialidade(nome);
+			}
+
+		} catch (SQLException e) {
+			System.out.println(" Erro ao buscar especialidade: " + e.getMessage());
+		}
+
+		return null;
+	}
+
+	// Atualizar nome da especialidade
+	public void atualizar(String nomeAntigo, String nomeNovo) {
+		String sql = "UPDATE Especialidade SET nome_Especialidade = ? WHERE nome_Especialidade = ?";
+
+		try (Connection conn = Conexao.conectar(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setString(1, nomeNovo);
+			stmt.setString(2, nomeAntigo);
+
+			int linhasAfetadas = stmt.executeUpdate();
+			if (linhasAfetadas > 0) {
+				System.out.println(" Especialidade atualizada com sucesso!");
+			} else {
+				System.out.println("⚠ Nenhuma especialidade encontrada com o nome: " + nomeAntigo);
+			}
+
+		} catch (SQLException e) {
+			System.out.println(" Erro ao atualizar especialidade: " + e.getMessage());
+		}
+	}
+
+	// Deletar especialidade
+	public void deletar(String nomeEspecialidade) {
+		String sql = "DELETE FROM Especialidade WHERE nome_Especialidade = ?";
+
+		try (Connection conn = Conexao.conectar(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setString(1, nomeEspecialidade);
+			int linhasAfetadas = stmt.executeUpdate();
+
+			if (linhasAfetadas > 0) {
+				System.out.println(" Especialidade removida com sucesso!");
+			} else {
+				System.out.println("⚠ Nenhuma especialidade encontrada com o nome: " + nomeEspecialidade);
+			}
+
+		} catch (SQLException e) {
+			System.out.println(" Erro ao remover especialidade: " + e.getMessage());
+		}
+	}
+}

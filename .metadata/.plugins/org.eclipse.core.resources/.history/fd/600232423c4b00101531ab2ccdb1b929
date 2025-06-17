@@ -1,0 +1,143 @@
+package medPro.DAO;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
+import medPro.database.Conexao;
+import medPro.model.Atendente;
+import medPro.model.Sexo;
+
+//CORREÃÃO
+public class AtendenteDAO {
+
+	// Inserir atendente
+	public void salvar(Atendente atendente) {
+	    String sql = "INSERT INTO Atendente (nome_Atendente, idade_Atendente, sexo_Atendente, telefone_Atendente, email_Atendente) VALUES (?, ?, ?, ?, ?)";
+
+	    try (Connection conn = Conexao.conectar();
+	         PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+	        stmt.setString(1, atendente.getNomeAtendente());
+	        stmt.setInt(2, atendente.getIdadeAtendente());
+	        stmt.setString(3, atendente.getSexoAtendente().toString());
+	        stmt.setString(4, atendente.getTelefoneAtendente());
+	        stmt.setString(5, atendente.getEmailAtendente());
+
+	        stmt.executeUpdate();
+
+	
+	        ResultSet rs = stmt.getGeneratedKeys();
+	        if (rs.next()) {
+	            int matriculaGerada = rs.getInt(1);
+	            atendente.setMatriculaAtendente(matriculaGerada); 
+	        }
+
+	        System.out.println("Atendente inserido com sucesso!");
+	    } catch (SQLException e) {
+	        System.out.println("Erro ao inserir atendente: " + e.getMessage());
+	    }
+	}
+
+	// Listar todos
+	public List<Atendente> listarTodos() {
+		List<Atendente> lista = new ArrayList<>();
+		String sql = "SELECT * FROM Atendente";
+
+		try (Connection conn = Conexao.conectar();
+				Statement stmt = conn.createStatement();
+				ResultSet rs = stmt.executeQuery(sql)) {
+
+			while (rs.next()) {
+
+				String nome = rs.getString("nome_Atendente");
+				int idade = rs.getInt("idade_Atendente");
+				Sexo sexo = Sexo.valueOf(rs.getString("sexo_Atendente"));
+				String telefone = rs.getString("telefone_Atendente");
+				String email = rs.getString("email_Atendente");
+
+				Atendente a = new Atendente(nome, idade, sexo, telefone, email);
+				lista.add(a);
+			}
+
+		} catch (SQLException e) {
+			System.out.println("â Erro ao listar atendentes: " + e.getMessage());
+		}
+
+		return lista;
+	}
+
+	// Buscar por matrÃ­cula
+	public Atendente buscaPorMatricula(int matricula) {
+	    String sql = "SELECT * FROM Atendente WHERE matricula_Atendente = ?";
+	    Atendente atendente = null;
+
+	    try (Connection conn = Conexao.conectar(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        stmt.setInt(1, matricula);
+	        ResultSet rs = stmt.executeQuery();
+
+	        if (rs.next()) {
+	            String nome = rs.getString("nome_Atendente");
+	            int idade = rs.getInt("idade_Atendente");
+	            Sexo sexo = Sexo.valueOf(rs.getString("sexo_Atendente"));
+	            String telefone = rs.getString("telefone_Atendente");
+	            String email = rs.getString("email_Atendente");
+
+	            atendente = new Atendente(nome, idade, sexo, telefone, email);
+
+	            System.out.println("Atendente encontrado:");
+	            System.out.println("Matrícula: " + matricula);
+	            System.out.println("Nome: " + nome);
+	            System.out.println("Idade: " + idade);
+	            System.out.println("Sexo: " + sexo);
+	            System.out.println("Telefone: " + telefone);
+	            System.out.println("Email: " + email);
+	        } else {
+	            System.out.println("❌ Nenhum atendente encontrado com essa matrícula.");
+	        }
+	    } catch (SQLException e) {
+	        System.out.println("❌ Erro ao buscar atendente: " + e.getMessage());
+	    }
+
+	    return atendente;
+	}
+
+
+	// Atualizar
+	public void atualizar(Atendente atendente) {
+		String sql = "UPDATE Atendente SET nome_Atendente = ?, idade_Atendente = ?, sexo_Atendente = ?, telefone_Atendente = ?, email_Atendente = ? WHERE matricula_Atendente = ?";
+
+		try (Connection conn = Conexao.conectar(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setString(1, atendente.getNomeAtendente());
+			stmt.setInt(2, atendente.getIdadeAtendente());
+			stmt.setString(3, atendente.getSexoAtendente().toString());
+			stmt.setString(4, atendente.getTelefoneAtendente());
+			stmt.setString(5, atendente.getEmailAtendente());
+			stmt.setInt(6, atendente.getMatriculaAtendente());
+
+			stmt.executeUpdate();
+			System.out.println("Atendente atualizado com sucesso!");
+		} catch (SQLException e) {
+			System.out.println("Erro ao atualizar atendente: " + e.getMessage());
+		}
+	}
+
+	// Deletar
+	public void deletar(int matricula) {
+		String sql = "DELETE FROM Atendente WHERE matricula_Atendente = ?";
+
+		try (Connection conn = Conexao.conectar(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setInt(1, matricula);
+			stmt.executeUpdate();
+			System.out.println("Atendente removido com sucesso!");
+		} catch (SQLException e) {
+			System.out.println("Erro ao remover atendente: " + e.getMessage());
+		}
+	}
+}

@@ -1,0 +1,269 @@
+package medPro.main;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.InputMismatchException;
+import java.util.List;
+import java.util.Scanner;
+
+import medPro.DAO.*;
+import medPro.model.*;
+
+public class Main {
+	public static void main(String[] args) {
+
+		// --- Inicialização dos DAOs ---
+		AtendenteDAO atendenteDAO = new AtendenteDAO();
+		MedicoDAO medicoDAO = new MedicoDAO();
+		PacienteDAO pacienteDAO = new PacienteDAO();
+		MedicamentoDAO medicamentoDAO = new MedicamentoDAO();
+		EspecialidadeDAO especialidadeDAO = new EspecialidadeDAO();
+		ConsultaDAO consultaDAO = new ConsultaDAO();
+		ReceitaDAO receitaDAO = new ReceitaDAO();
+		
+		// --- Variáveis de controle ---
+		Scanner scanner = new Scanner(System.in);
+		int opcao = -1;
+
+		do {
+			// --- Apresentação do Menu ---
+			System.out.println("\n===== MENU PRINCIPAL =====");
+			System.out.println("--- Atendente ---");
+			System.out.println("1. Cadastrar | 2. Visualizar | 3. Atualizar | 4. Excluir");
+			
+			System.out.println("--- Médico ---");
+			System.out.println("5. Cadastrar | 6. Visualizar | 7. Atualizar | 8. Excluir");
+			
+			System.out.println("--- Paciente ---");
+			System.out.println("9. Cadastrar | 10. Visualizar | 11. Atualizar | 12. Excluir");
+			
+			System.out.println("--- Medicamento ---");
+			System.out.println("13. Cadastrar | 14. Visualizar | 15. Atualizar | 16. Excluir");
+			
+			System.out.println("--- Especialidade ---");
+			System.out.println("17. Cadastrar | 18. Visualizar | 19. Atualizar | 20. Excluir");
+			
+			System.out.println("--- Consulta ---");
+			System.out.println("21. Agendar | 22. Listar Todas | 23. Finalizar e Gerar Receita | 24. Ver Total por Médico");
+			
+			System.out.println("--- Relatórios ---");
+			System.out.println("25. Gerar relatório de consulta com receita");
+			
+			System.out.println("0. Sair");
+			System.out.print("Escolha uma opção: ");
+
+			// --- Tratamento de Erro para entrada de opção ---
+			try {
+				opcao = scanner.nextInt();
+			} catch (InputMismatchException e) {
+				System.out.println("❌ Erro: Por favor, digite um número válido para a opção.");
+				scanner.nextLine(); // Limpa o buffer do scanner para evitar loop infinito
+				continue; // Volta para o início do loop do-while
+			}
+			scanner.nextLine(); // Limpa o buffer após ler o número
+
+			switch (opcao) {
+				// ==================================================================
+				//  CASES DE ATENDENTE
+				// ==================================================================
+				case 1:
+					try {
+						System.out.print("Nome do atendente: ");
+						String nome_Atendente = scanner.nextLine();
+						System.out.print("Idade do atendente: ");
+						int idade_Atendente = scanner.nextInt();
+						scanner.nextLine();
+
+						Sexo sexo_Atendente = null;
+						do {
+							System.out.print("Sexo do atendente (M/F): ");
+							String sexoA = scanner.nextLine().toUpperCase();
+							if (sexoA.equals("M")) sexo_Atendente = Sexo.M;
+							else if (sexoA.equals("F")) sexo_Atendente = Sexo.F;
+							else System.out.println("❌ Sexo inválido, tente novamente.");
+						} while (sexo_Atendente == null);
+
+						System.out.print("Telefone: ");
+						String telefone_Atendente = scanner.nextLine();
+						System.out.print("Email: ");
+						String email_Atendente = scanner.nextLine();
+
+						Atendente atendente = new Atendente(nome_Atendente, idade_Atendente, sexo_Atendente, telefone_Atendente, email_Atendente);
+						atendenteDAO.salvar(atendente);
+						System.out.println("✅ Atendente cadastrado com sucesso!");
+					} catch (InputMismatchException e) {
+						System.out.println("❌ Erro: A idade deve ser um número.");
+						scanner.nextLine(); // Limpa o buffer
+					}
+					break;
+				case 2:
+					try {
+						System.out.print("Digite a matrícula do atendente: ");
+						int matriculaSelect = scanner.nextInt();
+						Atendente atendenteBuscado = atendenteDAO.buscarPorMatricula(matriculaSelect);
+						if (atendenteBuscado != null) {
+							System.out.println("🔎 Dados do Atendente: " + atendenteBuscado);
+						} else {
+							System.out.println("⚠️ Atendente não encontrado.");
+						}
+					} catch (InputMismatchException e) {
+						System.out.println("❌ Erro: A matrícula deve ser um número.");
+						scanner.nextLine();
+					}
+					break;
+				case 3:
+					try {
+						System.out.print("Digite a matrícula do atendente a ser atualizado: ");
+						int matriculaUpdate = scanner.nextInt();
+						scanner.nextLine();
+
+						Atendente atendenteUpdate = atendenteDAO.buscarPorMatricula(matriculaUpdate);
+						if (atendenteUpdate == null) {
+							System.out.println("⚠️ Atendente não encontrado.");
+							break;
+						}
+
+						System.out.print("Novo nome: ");
+						atendenteUpdate.setNomeAtendete(scanner.nextLine());
+						// Adicionar mais campos para atualizar conforme necessário...
+
+						atendenteDAO.atualizar(atendenteUpdate);
+						System.out.println("✅ Dados do atendente atualizados com sucesso!");
+					} catch (InputMismatchException e) {
+						System.out.println("❌ Erro: A matrícula deve ser um número.");
+						scanner.nextLine();
+					}
+					break;
+				case 4:
+					try {
+						System.out.print("Digite a matrícula do atendente a ser excluído: ");
+						int matriculaDelete = scanner.nextInt();
+						scanner.nextLine();
+
+						Atendente atendenteParaDeletar = atendenteDAO.buscarPorMatricula(matriculaDelete);
+						if (atendenteParaDeletar == null) {
+							System.out.println("⚠️ Atendente não encontrado.");
+							break;
+						}
+
+						System.out.println("Você tem certeza que deseja excluir o atendente: " + atendenteParaDeletar.getNomeAtendente() + "? (S/N)");
+						String confirmacao = scanner.nextLine().toUpperCase();
+
+						if (confirmacao.equals("S")) {
+							atendenteDAO.deletar(matriculaDelete);
+							System.out.println("✅ Atendente excluído com sucesso.");
+						} else {
+							System.out.println("Operação cancelada.");
+						}
+					} catch (InputMismatchException e) {
+						System.out.println("❌ Erro: A matrícula deve ser um número.");
+						scanner.nextLine();
+					}
+					break;
+					
+				// ==================================================================
+				//  CASES DE PACIENTE (Exemplo de refatoração)
+				// ==================================================================
+				case 9:
+					try {
+						System.out.print("CPF do paciente: ");
+						String cpf_Paciente = scanner.nextLine();
+						System.out.print("Nome do paciente: ");
+						String nome_Paciente = scanner.nextLine();
+						System.out.print("Idade do paciente: ");
+						int idade_Paciente = scanner.nextInt();
+						scanner.nextLine();
+						// ... resto do cadastro de paciente ...
+						Paciente paciente = new Paciente(cpf_Paciente, nome_Paciente, idade_Paciente, null, null, null); // simplificado
+						pacienteDAO.salvar(paciente);
+						System.out.println("✅ Paciente cadastrado com sucesso!");
+					} catch (InputMismatchException e) {
+						System.out.println("❌ Erro: A idade deve ser um número.");
+						scanner.nextLine();
+					}
+					break;
+				case 10:
+					System.out.print("Digite o CPF do paciente: ");
+					String cpfSelect = scanner.nextLine();
+					Paciente pacienteBuscado = pacienteDAO.buscarPorCpf(cpfSelect);
+					if (pacienteBuscado != null) {
+						System.out.println("🔎 Dados do Paciente: " + pacienteBuscado);
+					} else {
+						System.out.println("⚠️ Paciente não encontrado.");
+					}
+					break;
+
+				// ==================================================================
+				//  CASES DE CONSULTA
+				// ==================================================================
+				case 21:
+					try {
+						DateTimeFormatter formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+						LocalDate data = null;
+						while (data == null) {
+							System.out.print("Data da Consulta (dd/mm/yyyy): ");
+							String dataConsultaStr = scanner.nextLine();
+							try {
+								data = LocalDate.parse(dataConsultaStr, formatoData);
+							} catch (DateTimeParseException e) {
+								System.out.println("❌ Formato de data inválido! Tente novamente.");
+							}
+						}
+
+						LocalTime hora = null;
+						while (hora == null) {
+							System.out.print("Hora da Consulta (HH:mm): ");
+							String horaConsultaStr = scanner.nextLine();
+							try {
+								hora = LocalTime.parse(horaConsultaStr);
+							} catch (DateTimeParseException e) {
+								System.out.println("❌ Formato de hora inválido! Tente novamente.");
+							}
+						}
+
+						System.out.print("Digite o CRM do médico: ");
+						String crmMediciConsulta = scanner.nextLine();
+						if (medicoDAO.buscarPorCRM(crmMediciConsulta) == null) {
+							System.out.println("⚠️ Médico não encontrado. Agendamento cancelado.");
+							break;
+						}
+
+						System.out.print("Digite o CPF do paciente: ");
+						String cpfPacienteConsulta = scanner.nextLine();
+						if (pacienteDAO.buscarPorCpf(cpfPacienteConsulta) == null) {
+							System.out.println("⚠️ Paciente não encontrado. Agendamento cancelado.");
+							break;
+						}
+
+						Consulta consulta = new Consulta(data.toString(), hora, 0, crmMediciConsulta, cpfPacienteConsulta);
+						consultaDAO.inserirConsultaViaProcedure(consulta);
+						System.out.println("✅ Consulta agendada com sucesso!");
+
+					} catch (Exception e) {
+						System.out.println("❌ Ocorreu um erro ao agendar a consulta: " + e.getMessage());
+					}
+					break;
+				case 22:
+					System.out.println("📋 Listando todas as consultas...");
+					consultaDAO.listarConsultasCompletas();
+					break;
+
+				// ==================================================================
+				//  OUTROS CASES
+				// ==================================================================
+				case 0:
+					System.out.println("Saindo do sistema... Até mais!");
+					break;
+				default:
+					if (opcao != -1) { // Evita a mensagem de opção inválida na primeira execução com erro
+						System.out.println("❌ Opção inválida. Por favor, tente novamente.");
+					}
+			}
+		} while (opcao != 0);
+
+		scanner.close();
+	}
+}

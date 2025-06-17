@@ -1,0 +1,631 @@
+package medPro.main;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+import medPro.DAO.*;
+import medPro.model.*;
+
+//PacienteDAO pacienteDAO = new PacienteDAO();
+//Paciente p = new Paciente("12345278900", "Carlos", 30, Sexo.M, "11999999999", "carlos@email.com");
+//pacienteDAO.salvar(p);
+
+// Busque e imprima
+//Paciente buscado = pacienteDAO.buscarPorCpf("12345278900");
+//System.out.println(buscado);
+
+public class Main {
+	public static void main(String[] args) {
+		 
+		AtendenteDAO atendenteDAO = new AtendenteDAO();
+		Atendente atendente = null;
+		MedicoDAO medicoDAO = new MedicoDAO();
+		Medico medico = null;
+		PacienteDAO pacienteDAO = new PacienteDAO();
+		Paciente paciente = null;
+		MedicamentoDAO medicamentoDAO = new MedicamentoDAO();
+		Medicamento medicamento = null;
+		EspecialidadeDAO especialidadeDAO = new EspecialidadeDAO();
+		Especialidade especialidade = null;
+		ConsultaDAO consultaDAO = new ConsultaDAO();
+		Consulta consulta = null;
+		ReceitaDAO receitaDAO = new ReceitaDAO();
+		Receita receita =null;
+		Sexo novoSexo = null;
+		Scanner scanner = new Scanner(System.in);
+		int opcao = 0;
+
+		do{
+
+			System.out.println("===== MENU =====");
+			System.out.println("1. Cadastrar atendente");
+			System.out.println("2. Visualizar dados do atendente");
+			System.out.println("3. Atualizar dados do atendente");
+			System.out.println("4. Excluir atendente");
+
+			System.out.println("5. Cadastrar médico");
+			System.out.println("6. Visualizar dados do médico");
+			System.out.println("7. Atualizar dados do médico");
+			System.out.println("8. Excluir médico");
+
+			System.out.println("9. Cadastrar paciente");
+			System.out.println("10. Visualizar dados do paciente");
+			System.out.println("11. Atualizar dados do paciente");
+			System.out.println("12. Excluir paciente");
+
+			System.out.println("13. Cadastrar medicamento");
+			System.out.println("14. Visualizar dados do medicamento");
+			System.out.println("15. Atualizar dados do medicamento");
+			System.out.println("16. Excluir medicamento");
+
+			System.out.println("17. Cadastrar especialidades");
+			System.out.println("18. Visualizar todas as especialidades");
+			System.out.println("19. Atualizar nome de especialidade");
+			System.out.println("20. Excluir especialidades");
+
+			System.out.println("21. Agendar consulta");
+			System.out.println("22. Listar todas as consultas");
+			System.out.println("23. Finalizar consulta");
+			System.out.println("24. Ver consultas por médico");
+			
+			System.out.println("25. Gerar relatório de consulta");
+			System.out.println("0. Sair");
+			System.out.print("Escolha uma opção: ");
+			opcao = scanner.nextInt();
+			scanner.nextLine();
+
+			switch (opcao) {
+
+			case 1:
+
+				System.out.print("Nome do atendente: ");
+				String nome_Atendente = scanner.nextLine();
+				System.out.print("Idade do atendente: ");
+				int idade_Atendente = scanner.nextInt();
+				scanner.nextLine();
+
+				Sexo sexo_Atendente = null;
+				do {
+					System.out.print("Sexo do atendente:(M ou F) ");
+					String sexoA = scanner.nextLine().toUpperCase();
+					if (sexoA.equals("M")) {
+						sexo_Atendente = Sexo.M;
+						break;
+					} else if (sexoA.equals("F")) {
+						sexo_Atendente = Sexo.F;
+						break;
+					} else {
+						System.out.print("❌ Sexo inválido, tente novamente");
+
+					}
+				} while (true);
+
+				System.out.print("Telefone do atendente: ");
+				String telefone_Atendente = scanner.nextLine();
+				System.out.print("Email do atendente: ");
+				String email_Atendente = scanner.nextLine();
+
+				atendente = new Atendente(nome_Atendente, idade_Atendente, sexo_Atendente, telefone_Atendente,
+						email_Atendente);
+				atendenteDAO.salvar(atendente);
+
+				break;
+			case 2:
+
+				System.out.print("Insira a matricula do atendente desejado: ");
+				int matriculaSelect = scanner.nextInt();
+
+				atendenteDAO.buscarPorMatricula(matriculaSelect);
+
+				break;
+			case 3:
+				System.out.print("Insira a matricula do atendente desejado: ");
+				int matriculaUpdate = scanner.nextInt();
+				scanner.nextLine();
+
+				Atendente atendenteUpdate = atendenteDAO.buscarPorMatricula(matriculaUpdate);
+
+				System.out.print("Novo nome do atendente: ");
+				atendenteUpdate.setNomeAtendete(scanner.nextLine());
+				System.out.print("Nova idade do atendente: ");
+				atendenteUpdate.setIdadeAtendente(scanner.nextInt());
+
+				do {
+					System.out.print("Novo sexo (M ou F): ");
+					String sexoUpdate = scanner.nextLine().toUpperCase();
+					if (sexoUpdate.equals("M")) {
+						novoSexo = Sexo.M;
+					} else if (sexoUpdate.equals("F")) {
+						novoSexo = Sexo.F;
+					} else {
+						System.out.println("❌ Sexo inválido, tente novamente.");
+						continue;
+					}
+					break;
+				} while (true);
+				atendenteUpdate.setSexoAtendente(novoSexo);
+
+				System.out.print("Novo telefone do atendente: ");
+				atendenteUpdate.setTelefoneAtendente(scanner.nextLine());
+
+				System.out.print("Novo email do atendente: ");
+				atendenteUpdate.setEmailAtendente(scanner.nextLine());
+
+				atendenteDAO.atualizar(atendenteUpdate);
+
+				break;
+
+			case 4:
+
+				System.out.print("Insira a matricula do atendente desejado: ");
+				int matriculaDelete = scanner.nextInt();
+				atendenteDAO.deletar(matriculaDelete);
+
+				break;
+			case 5:
+
+				System.out.print("CRM do médico: ");
+				String CRM_Medico = scanner.nextLine();
+				System.out.print("Nome do médico: ");
+				String nome_Medico = scanner.nextLine();
+				System.out.print("Idade do médico: ");
+				int idade_Medico = scanner.nextInt();
+				scanner.nextLine();
+
+				Sexo sexo_Medico = null;
+				do {
+					System.out.print("Sexo do médico:(M ou F) ");
+					String sexoM = scanner.nextLine().toUpperCase();
+					if (sexoM.equals("M")) {
+						sexo_Medico = Sexo.M;
+						break;
+					} else if (sexoM.equals("F")) {
+						sexo_Medico = Sexo.F;
+						break;
+					} else {
+						System.out.print("❌ Sexo inválido, tente novamente");
+
+					}
+				} while (true);
+
+				System.out.print("Telefone do médico: ");
+				String telefone_Medico = scanner.nextLine();
+				System.out.print("Email do médico: ");
+				String email_Medico = scanner.nextLine();
+
+				
+				List<Especialidade> todasEspecialidades = especialidadeDAO.listarTodos();
+
+				List<Especialidade> especialidadesSelecionadas = new ArrayList<>();
+				System.out.println("Selecione as especialidades do médico (digite os números separados por vírgula):");
+
+				for (int i = 0; i < todasEspecialidades.size(); i++) {
+				    System.out.println((i + 1) + " - " + todasEspecialidades.get(i).getNomeEspecialidade());
+				}
+
+				System.out.print("Escolha: ");
+				String[] escolhas = scanner.nextLine().split(",");
+
+				for (String escolha : escolhas) {
+				    try {
+				        int indice = Integer.parseInt(escolha.trim()) - 1;
+				        if (indice >= 0 && indice < todasEspecialidades.size()) {
+				            especialidadesSelecionadas.add(todasEspecialidades.get(indice));
+				        } else {
+				            System.out.println("❌ Número inválido: " + escolha.trim());
+				        }
+				    } catch (NumberFormatException e) {
+				        System.out.println("❌ Entrada inválida: " + escolha.trim());
+				    }
+				}
+
+				medico = new Medico(CRM_Medico, nome_Medico, idade_Medico, sexo_Medico, telefone_Medico, email_Medico, especialidadesSelecionadas);
+				medicoDAO.salvarMedico(medico);
+
+				break;
+			case 6:
+
+				System.out.print("Insira o CRM do médico desejado: ");
+				String crmSelect = scanner.nextLine();
+
+				medicoDAO.buscarPorCRM(crmSelect);
+
+				break;
+			case 7:
+
+				System.out.print("Insira o CRM do médico desejado: ");
+				String crmSUpdate = scanner.nextLine();
+
+				Medico medicoUpdate = medicoDAO.buscarPorCRM(crmSUpdate);
+
+				System.out.print("Novo nome do médico: ");
+				medicoUpdate.setNomeMedico(scanner.nextLine());
+				System.out.print("Nova idade do médico: ");
+				medicoUpdate.setIdadeMedico(scanner.nextInt());
+				scanner.nextLine();
+
+				do {
+					System.out.print("Novo sexo (M ou F): ");
+					String sexoUpdate = scanner.nextLine().toUpperCase();
+					if (sexoUpdate.equals("M")) {
+						novoSexo = Sexo.M;
+					} else if (sexoUpdate.equals("F")) {
+						novoSexo = Sexo.F;
+					} else {
+						System.out.println("❌ Sexo inválido, tente novamente.");
+						continue;
+					}
+					break;
+				} while (true);
+				medicoUpdate.setSexoMedico(novoSexo);
+
+				System.out.print("Novo telefone do médico: ");
+				medicoUpdate.setTelefoneMedico(scanner.nextLine());
+
+				System.out.print("Novo email do médico: ");
+				medicoUpdate.setEmailMedico(scanner.nextLine());
+
+				List<Especialidade> todasEspecialidadesUpdate = especialidadeDAO.listarTodos();
+
+				List<Especialidade> especialidadesUpdate = new ArrayList<>();
+				System.out.println("Selecione as especialidades do médico (digite os números separados por vírgula):");
+
+				for (int i = 0; i < todasEspecialidadesUpdate.size(); i++) {
+				    System.out.println((i + 1) + " - " + todasEspecialidadesUpdate.get(i).getNomeEspecialidade());
+				}
+
+				System.out.print("Escolha: ");
+				String[] escolhasUpdate = scanner.nextLine().split(",");
+
+				for (String escolha : escolhasUpdate) {
+				    try {
+				        int indice = Integer.parseInt(escolha.trim()) - 1;
+				        if (indice >= 0 && indice < todasEspecialidadesUpdate.size()) {
+				            especialidadesUpdate.add(todasEspecialidadesUpdate.get(indice));
+				        } else {
+				            System.out.println("❌ Número inválido: " + escolha.trim());
+				        }
+				    } catch (NumberFormatException e) {
+				        System.out.println("❌ Entrada inválida: " + escolha.trim());
+				    }
+				}
+
+				medicoUpdate.setEspecialidades(especialidadesUpdate);
+
+				medicoDAO.atualizar(medicoUpdate);
+
+				break;
+
+			case 8:
+				
+				System.out.print("Insira o CRM do médico desejado: ");
+				String crmDelete = scanner.nextLine();
+				medicoDAO.deletar(crmDelete);
+
+				
+				break;
+			case 9:
+				
+				System.out.print("CPF do paciente: ");
+				String cpf_Paciente = scanner.nextLine();
+				System.out.print("Nome do paciente: ");
+				String nome_Paciente = scanner.nextLine();
+				System.out.print("Idade do paciente: ");
+				int idade_Paciente = scanner.nextInt();
+				scanner.nextLine();
+
+				Sexo sexo_Paciente = null;
+				do {
+					System.out.print("Sexo do paciente:(M ou F) ");
+					String sexoP = scanner.nextLine().toUpperCase();
+					if (sexoP.equals("M")) {
+						sexo_Paciente = Sexo.M;
+						break;
+					} else if (sexoP.equals("F")) {
+						sexo_Paciente = Sexo.F;
+						break;
+					} else {
+						System.out.print("❌ Sexo inválido, tente novamente");
+
+					}
+				} while (true);
+
+				System.out.print("Telefone do paciente: ");
+				String telefone_Paciente = scanner.nextLine();
+				System.out.print("Email do paciente: ");
+				String email_Paciente = scanner.nextLine();
+
+				paciente = new Paciente(cpf_Paciente,nome_Paciente, idade_Paciente, sexo_Paciente, telefone_Paciente,
+						email_Paciente);
+				pacienteDAO.salvar(paciente);
+
+				break;
+
+			case 10:
+				
+				System.out.print("Insira o CPF do paciente desejado: ");
+				String cpfSELECT = scanner.nextLine();
+				pacienteDAO.buscarPorCpf(cpfSELECT);
+
+				break;
+			case 11:
+
+				System.out.print("Insira o CPF do paciente desejado: ");
+				String cpfUpdate = scanner.nextLine();
+				
+
+				Paciente pacienteUpdate = pacienteDAO.buscarPorCpf(cpfUpdate);
+
+				System.out.print("Novo nome do paciente: ");
+				pacienteUpdate.setNomePaciente(scanner.nextLine());
+				System.out.print("Nova idade do paciente: ");
+				pacienteUpdate.setIdadePaciente(scanner.nextInt());
+
+				do {
+					System.out.print("Novo sexo (M ou F): ");
+					String sexoUpdate = scanner.nextLine().toUpperCase();
+					if (sexoUpdate.equals("M")) {
+						novoSexo = Sexo.M;
+					} else if (sexoUpdate.equals("F")) {
+						novoSexo = Sexo.F;
+					} else {
+						System.out.println("❌ Sexo inválido, tente novamente.");
+						continue;
+					}
+					break;
+				} while (true);
+				pacienteUpdate.setSexoPaciente(novoSexo);
+
+				System.out.print("Novo telefone do atendente: ");
+				pacienteUpdate.setTelefonePaciente(scanner.nextLine());
+
+				System.out.print("Novo email do atendente: ");
+				pacienteUpdate.setEmailPaciente(scanner.nextLine());
+
+				pacienteDAO.atualizar(pacienteUpdate);
+
+				break;
+				
+			case 12:
+
+				System.out.print("Insira o CPF do paciente desejado: ");
+				String cpfDelete = scanner.nextLine();
+				pacienteDAO.deletar(cpfDelete);
+				
+				break;
+				
+			case 13:
+
+				System.out.print("Nome do medicamento: ");
+				String nomeMedicamento = scanner.nextLine();
+				System.out.print("Horário do medicamento:(Hr:Mn) ");
+				LocalTime horario_Medicamento = LocalTime.parse(scanner.nextLine());
+				System.out.print("Quantidade do medicamento: ");
+				String quantidade_Medicamento = scanner.nextLine();
+
+				medicamento = new Medicamento(nomeMedicamento, horario_Medicamento, quantidade_Medicamento);
+				medicamentoDAO.salvar(medicamento);
+
+				break;
+			case 14:
+				
+				System.out.print("Insira o id do medicamento desejado: ");
+				int idSELECT = scanner.nextInt();
+				medicamentoDAO.buscarPorId(idSELECT);
+
+				break;
+			case 15:
+				
+				System.out.print("Insira o id do medicamento desejado: ");
+				int idUpdate = scanner.nextInt();
+				scanner.nextLine();
+				
+				Medicamento medicamentoUpdate = medicamentoDAO.buscarPorId(idUpdate);
+				
+				
+				System.out.print("Novo nome do medicamento: ");
+				medicamentoUpdate.setNomeMedicamento(scanner.nextLine());
+				System.out.print("Novo horário do medicamento:(Hr:Mn) ");
+				medicamentoUpdate.setHorario_Medicamento( LocalTime.parse(scanner.nextLine()));
+				System.out.print("Nova quantidade do medicamento: ");
+				medicamentoUpdate.setQuantidade_Medicamento(scanner.nextLine());
+				
+				medicamentoDAO.atualizar(medicamentoUpdate);
+
+
+				break;
+			case 16:
+				
+				System.out.print("Insira o id do medicamento desejado: ");
+				int idDelete = scanner.nextInt();
+				medicamentoDAO.deletar(idDelete);
+
+				break;
+			case 17:
+				
+				System.out.print("Nome da especialidade: ");
+				String nomeEspecialidade = scanner.nextLine();
+			
+				
+				especialidade = new Especialidade(nomeEspecialidade);
+		        especialidadeDAO.salvar(especialidade);
+
+				break;
+			case 18:
+				
+				List<Especialidade> especialidades = especialidadeDAO.listarTodos();
+				if (especialidades.isEmpty()) {
+				    System.out.println("⚠️ Nenhuma especialidade encontrada.");
+				} else {
+				    System.out.println("📋 Lista de Especialidades:");
+				    for (Especialidade esp : especialidades) {
+				        System.out.println("- " + esp.getNomeEspecialidade());
+				    }
+				}
+
+				break;
+			case 19:
+				System.out.print("Digite o nome da especialidade que deseja atualizar: ");
+			    String nomeAntigo = scanner.nextLine();
+
+			    System.out.print("Digite o novo nome da especialidade: ");
+			    String nomeNovo = scanner.nextLine();
+
+			    especialidadeDAO.atualizar(nomeAntigo, nomeNovo);
+			    break;
+			
+			case 20:
+				System.out.print("Insira o nome da especialidade  deseja excluir: ");
+				String nomeDelete = scanner.nextLine();
+				especialidadeDAO.deletar(nomeDelete);
+				break;
+			case 21:
+				
+				DateTimeFormatter formato = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+				String dataConsulta = null;
+				LocalDate data = null;
+
+				while (data == null) {
+					System.out.print("Data da Consulta:(dd/mm/yyyy) ");
+					dataConsulta = scanner.nextLine();
+					try {
+
+						data = LocalDate.parse(dataConsulta, formato);
+
+					} catch (DateTimeParseException e) {
+						System.out.println("Formato de data inválido! Digite novamente.");
+					}
+				}
+				
+				
+				System.out.print("Hora da Consulta:(Hr:Mn) ");
+				LocalTime horaConsulta = LocalTime.parse(scanner.nextLine());
+
+				System.out.println("Escolha o atendente:");
+				atendenteDAO.listarTodos();
+				
+				System.out.print("Digite a matricula do atendente: ");
+				int idAtendenteConsulta = scanner.nextInt();
+				scanner.nextLine();
+			
+
+				System.out.println("Escolha o médico:");
+				medicoDAO.listarTodos();
+				System.out.print("Digite o CRM do médico: ");
+				String crmMediciConsulta = scanner.nextLine();
+				
+				System.out.println("Escolha o paciente:");
+				pacienteDAO.listarTodos();
+				System.out.print("Digite o CPF do paciente: ");
+				String cpfPacienteConsulta = scanner.nextLine();
+				
+				
+				 consulta = new Consulta(dataConsulta, horaConsulta, idAtendenteConsulta, crmMediciConsulta, cpfPacienteConsulta);
+				consultaDAO.inserirConsultaViaProcedure(consulta);
+			
+				
+				break;
+			case 22:
+				System.out.println("Listar todas as consultas");
+				consultaDAO.listarConsultasCompletas();
+				
+				break;
+			case 23:
+				  System.out.println("Hora de finalizar consulta, vamos preencher a receita");
+
+				    System.out.print("Digite o ID da consulta que você quer finalizar: ");
+				    int idConsulta = scanner.nextInt();
+				    scanner.nextLine();  // limpar buffer
+
+				    System.out.print("Qual o tratamento do paciente (descrição da receita)? ");
+				    String descricaoReceita = scanner.nextLine();
+
+				    // Listar medicamentos disponíveis
+				    List<Medicamento> medicamentosDisponiveis = medicamentoDAO.listarTodos();
+				    List<Medicamento> medicamentosSelecionados = new ArrayList<>();
+
+				    if (medicamentosDisponiveis.isEmpty()) {
+				        System.out.println("⚠️ Nenhum medicamento disponível no sistema.");
+				    } else {
+				        System.out.println("📋 Lista de Medicamentos disponíveis:");
+				        for (Medicamento medi : medicamentosDisponiveis) {
+				            System.out.println(medi.getIdMedicamento() + " - " + medi.getNomeMedicamento());
+				        }
+
+				        String continuar;
+				        do {
+				            System.out.print("Digite o ID do medicamento que deseja adicionar na receita: ");
+				            int idMedicamento = scanner.nextInt();
+				            scanner.nextLine();
+
+				            Medicamento m = medicamentoDAO.buscarPorId(idMedicamento);
+				            if (m != null) {
+				                medicamentosSelecionados.add(m);
+				                System.out.println("✅ Medicamento adicionado.");
+				            } else {
+				                System.out.println("❌ Medicamento não encontrado.");
+				            }
+
+				            System.out.print("Deseja adicionar outro medicamento? (S/N): ");
+				            continuar = scanner.nextLine().toUpperCase();
+				        } while (continuar.equals("S"));
+				    }
+
+				   
+				     receita = new Receita(0, descricaoReceita, medicamentosSelecionados, idConsulta);
+
+				    
+				    receitaDAO = new ReceitaDAO();
+				    receitaDAO.salvar(receita);
+
+				    break;
+				
+			
+
+			case 24:
+			
+				System.out.print("Digite o CRM do médico desejado: ");
+			    String crmMedicoFn = scanner.nextLine();
+
+			    int totalConsultas = consultaDAO.totalConsultasPorMedico(crmMedicoFn);
+			    System.out.println("✅ Total de consultas realizadas pelo médico de CRM " + crmMedicoFn + ": " + totalConsultas);
+			    break;
+				
+			
+				
+			case 25:
+				System.out.println("Relatório detalhado:");
+				
+				receitaDAO = new ReceitaDAO();
+				List<String[]> receitas = receitaDAO.buscarReceitaCompletaPorId(2);
+
+				for (String[] r : receitas) {
+				    System.out.println("ID: " + r[0]);
+				    System.out.println("Descrição: " + r[1]);
+				    System.out.println("Data Consulta: " + r[2]);
+				    System.out.println("Paciente: " + r[3]);
+				    System.out.println("Médico: " + r[4]);
+				    System.out.println("----------------------");
+				}
+
+				
+				break;
+
+
+			case 0:
+				System.out.println("Saindo... Até mais!");
+				break;
+			default:
+				System.out.println("Opção inválida. Tente novamente.");
+
+			}
+
+		}while(opcao!=0);
+		scanner.close();
+	} 
+}

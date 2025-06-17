@@ -1,0 +1,221 @@
+package medPro.DAO;
+
+import medPro.database.Conexao;
+import medPro.model.Medicamento;
+import medPro.model.Receita;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ReceitaDAO {
+
+	// Inserir receita com medicamentos
+	public void salvar(Receita receita) {
+		String sqlReceita = "INSERT INTO Receita (descricao_Receita, id_Consulta) VALUES (?, ?)";
+
+		try (Connection conn = Conexao.conectar()) {
+			conn.setAutoCommit(false);
+
+			try (PreparedStatement stmtReceita = conn.prepareStatement(sqlReceita, Statement.RETURN_GENERATED_KEYS)) {
+				stmtReceita.setString(1, receita.getDescricaoReceita());
+				stmtReceita.setInt(2, receita.getIdConsulta());
+				stmtReceita.executeUpdate();
+
+				ResultSet rs = stmtReceita.getGeneratedKeys();
+				if (rs.next()) {
+					int idReceita = rs.getInt(1);
+					receita.setIdReceita(idReceita);
+
+					// Inserção dos medicamentos
+					String sqlInsertMedicamento = "INSERT INTO Receita_Medicamento (id_Receita, id_Medicamento) VALUES (?, ?)";
+					try (PreparedStatement stmtMed = conn.prepareStatement(sqlInsertMedicamento)) {
+						for (Medicamento m : receita.getMedicamentos()) {
+							stmtMed.setInt(1, idReceita);
+							stmtMed.setInt(2, m.getIdMedicamento());
+							stmtMed.addBatch();
+						}
+						stmtMed.executeBatch();
+					}
+				}
+
+				conn.commit();
+				System.out.println("✓ Receita inserida com medicamentos!");
+			} catch (SQLException e) {
+				conn.rollback();
+				System.out.println("✘ Erro ao inserir receita: " + e.getMessage());
+			}
+		} catch (SQLException e) {
+			System.out.println("✘ Erro de conexão: " + e.getMessage());
+		}
+	}
+
+	public List<String[]> buscarReceitaCompletaPorId(int idReceita) {
+		List<String[]> lista = new ArrayList<>();
+
+		String sql = "SELECT * FROM vw_Receitas_Completas WHERE id_receita = ?";
+
+		try (Connection conn = Conexao.conectar(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setInt(1, idReceita);
+
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					// Pegando os campos direto como Strings
+					String[] linha = new String[5];
+					linha[0] = String.valueOf(rs.getInt("id_receita"));
+					linha[1] = rs.getString("descricao_receita");
+					linha[2] = rs.getString("data_consulta");
+					linha[3] = rs.getString("nome_Paciente");
+					linha[4] = rs.getString("nome_Medico");
+					lista.add(linha);
+				}
+			}
+
+		} catch (SQLException e) {
+			System.out.println("Erro ao emitir relatorio: " + e.getMessage());
+		}
+
+		return lista;
+	}
+
+	// Buscar receita por ID (com medicamentos)
+	public Receita buscarPorId(int id) {
+		String sqlReceita = "SELECT * FROM Receita WHERE id_Receita = ?";
+		String sqlMedicamentos = """
+				SELECT m.id_Medicamento, m.nome_Medicamento, m.horario_Medicamento, m.quantidade_Medicamento
+				FROM Medicamento m
+				JOIN Receita_Medicamento rm ON m.id_Medicamento = rm.id_Medicamento
+				WHERE rm.id_Receita = ?
+				""";
+
+		Receita receita = null;
+
+		try (Connection conn = Conexao.conectar()) {
+			try (PreparedStatement stmtReceita = conn.prepareStatement(sqlReceita)) {
+				stmtReceita.setInt(1, id);
+				ResultSet rsReceita = stmtReceita.executeQuery();
+
+				if (rsReceita.next()) {
+					String descricao = rsReceita.getString("descricao_Receita");
+					int idConsulta = rsReceita.getInt("id_Consulta");
+
+					List<Medicamento> medicamentos = new ArrayList<>();
+
+					try (PreparedStatement stmtMeds = conn.prepareStatement(sqlMedicamentos)) {
+						stmtMeds.setInt(1, id);
+						ResultSet rsMeds = stmtMeds.executeQuery();
+
+						while (rsMeds.next()) {
+							String nome = rsMeds.getString("nome_Medicamento");
+							Time horario = rsMeds.getTime("horario_Medicamento");
+							String quantidade = rsMeds.getString("quantidade_Medicamento");
+
+							medicamentos.add(new Medicamento(nome, horario.toLocalTime(), quantidade));
+						}
+					}
+
+					receita = new Receita(id, descricao, medicamentos, idConsulta);
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("✘ Erro ao buscar receita: " + e.getMessage());
+		}
+
+		return receita;
+	}
+
+	// Listar todas as receitas
+	public List<Receita> listarTodas() {
+		List<Receita> receitas = new ArrayList<>();
+		String sql = "SELECT id_Receita FROM Receita";
+
+		try (Connection conn = Conexao.conectar();
+				Statement stmt = conn.createStatement();
+				ResultSet rs = stmt.executeQuery(sql)) {
+
+			while (rs.next()) {
+				int id = rs.getInt("id_Receita");
+				Receita r = buscarPorId(id);
+				if (r != null)
+					receitas.add(r);
+			}
+
+		} catch (SQLException e) {
+			System.out.println("✘ Erro ao listar receitas: " + e.getMessage());
+		}
+
+		return receitas;
+	}
+
+	// Deletar receita
+	public void deletar(int id) {
+		String sqlAssoc = "DELETE FROM Receita_Medicamento WHERE id_Receita = ?";
+		String sqlReceita = "DELETE FROM Receita WHERE id_Receita = ?";
+
+		try (Connection conn = Conexao.conectar()) {
+			conn.setAutoCommit(false);
+
+			try (PreparedStatement stmtAssoc = conn.prepareStatement(sqlAssoc);
+					PreparedStatement stmtReceita = conn.prepareStatement(sqlReceita)) {
+
+				stmtAssoc.setInt(1, id);
+				stmtAssoc.executeUpdate();
+
+				stmtReceita.setInt(1, id);
+				stmtReceita.executeUpdate();
+
+				conn.commit();
+				System.out.println("✓ Receita removida com sucesso!");
+
+			} catch (SQLException e) {
+				conn.rollback();
+				System.out.println("✘ Erro ao deletar receita: " + e.getMessage());
+			}
+
+		} catch (SQLException e) {
+			System.out.println("✘ Erro de conexão ao deletar receita: " + e.getMessage());
+		}
+	}
+
+	// Atualizar receita
+	public void atualizar(Receita receita) {
+		String sqlUpdateReceita = "UPDATE Receita SET descricao_Receita = ?, id_Consulta = ? WHERE id_Receita = ?";
+		String sqlDeleteMedicamentos = "DELETE FROM Receita_Medicamento WHERE id_Receita = ?";
+		String sqlInsertMedicamento = "INSERT INTO Receita_Medicamento (id_Receita, id_Medicamento) VALUES (?, ?)";
+
+		try (Connection conn = Conexao.conectar()) {
+			conn.setAutoCommit(false);
+
+			// Atualiza descrição e idConsulta
+			try (PreparedStatement stmtUpdate = conn.prepareStatement(sqlUpdateReceita)) {
+				stmtUpdate.setString(1, receita.getDescricaoReceita());
+				stmtUpdate.setInt(2, receita.getIdConsulta());
+				stmtUpdate.setInt(3, receita.getIdReceita());
+				stmtUpdate.executeUpdate();
+			}
+
+			// Remove medicamentos antigos
+			try (PreparedStatement stmtDelete = conn.prepareStatement(sqlDeleteMedicamentos)) {
+				stmtDelete.setInt(1, receita.getIdReceita());
+				stmtDelete.executeUpdate();
+			}
+
+			// Insere os novos medicamentos
+			try (PreparedStatement stmtInsert = conn.prepareStatement(sqlInsertMedicamento)) {
+				for (Medicamento m : receita.getMedicamentos()) {
+					stmtInsert.setInt(1, receita.getIdReceita());
+					stmtInsert.setInt(2, m.getIdMedicamento());
+					stmtInsert.addBatch();
+				}
+				stmtInsert.executeBatch();
+			}
+
+			conn.commit();
+			System.out.println("✓ Receita atualizada com sucesso!");
+
+		} catch (SQLException e) {
+			System.out.println("✘ Erro ao atualizar receita: " + e.getMessage());
+		}
+	}
+}
